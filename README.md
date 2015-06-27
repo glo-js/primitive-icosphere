@@ -2,7 +2,7 @@
 
 [![stable](http://badges.github.io/stability-badges/dist/stable.svg)](http://github.com/badges/stability-badges)
 
-![demo](http://i.imgur.com/UWbuCGX.png)
+[![demo](http://i.imgur.com/Ais73FY.png)](http://glo-js.github.io/primitive-icosphere/)
 
 [(demo)](http://glo-js.github.io/primitive-icosphere/)
 

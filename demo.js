@@ -1,5 +1,5 @@
 var mesh = require('./')(1, {
-  subdivisions: 1
+  subdivisions: 0
 })
 
 var app = require('glo-demo-primitive')(mesh, {

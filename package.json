@@ -10,6 +10,7 @@
     "url": "https://github.com/mattdesl"
   },
   "dependencies": {
+    "gl-vec2": "^1.0.0",
     "gl-vec3": "^1.0.3",
     "icosphere": "^1.0.0",
     "triangle-centroid": "^1.0.0"

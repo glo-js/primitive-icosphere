@@ -1,6 +1,8 @@
 var icosphere = require('icosphere')
 var normalize = require('gl-vec3/normalize')
 var scale = require('gl-vec3/scale')
+var fixWrappedUVs = require('./lib/fix-wrapped-uvs')
+var fixPoles = require('./lib/fix-pole-uvs')
 var triangleCentroid = require('triangle-centroid')
 
 module.exports = function primitiveIcosphere (radius, opt) {
@@ -12,57 +14,85 @@ module.exports = function primitiveIcosphere (radius, opt) {
 
   var normals = []
   var uvs = []
-  var i
+  var i, position
 
   for (i = 0; i < complex.positions.length; i++) {
-    var position = complex.positions[i]
-    scale(position, position, radius)
+    position = complex.positions[i]
 
-    var normal = normalize([0, 0, 0], position)
-    var u = 0.5 * (-(getAzimuth(normal) / Math.PI) + 1.0)
-    var v = 0.5 + Math.asin(normal[1]) / Math.PI
-
-    normals.push(normal)
+    // get UV from unit icosphere
+    var u = 0.5 * (-(Math.atan2(position[2], -position[0]) / Math.PI) + 1.0)
+    var v = 0.5 + Math.asin(position[1]) / Math.PI
     uvs.push([ 1 - u, 1 - v ])
   }
 
-  // will need to fix seams...
-  var positions = complex.positions
-  var cells = complex.cells
-  for (i = 0; i < cells.length; i++) {
-    var cell = cells[i]
-    var a = cell[0]
-    var b = cell[1]
-    var c = cell[2]
-
-    var p0 = positions[a]
-    var p1 = positions[b]
-    var p2 = positions[c]
-
-    var centroid = triangleCentroid([ p0, p1, p2 ])
-    var azimuth = getAzimuth(centroid)
-    correctSeam(uvs[a], p0, azimuth)
-    correctSeam(uvs[b], p1, azimuth)
-    correctSeam(uvs[c], p2, azimuth)
-  }
-
-  return {
-    positions: positions,
-    cells: cells,
+  var mesh = {
+    positions: complex.positions,
+    cells: complex.cells,
     uvs: uvs,
     normals: normals
   }
+
+  fixPoles(mesh)
+  fixWrappedUVs(mesh)
+
+  // now determine normals
+  for (i = 0; i < mesh.positions.length; i++) {
+    position = mesh.positions[i]
+
+    // get normal
+    var normal = normalize([0, 0, 0], position)
+    normals.push(normal)
+
+    // and scale sphere to radius
+    scale(position, position, radius)
+  }
+
+  return mesh
 }
 
-function getAzimuth (normal) {
-  return Math.atan2(normal[2], -normal[0])
-}
 
-function correctSeam ( uv, vector, azimuth ) {
-  if ( ( azimuth < 0) && ( uv[0] === 1)) {
-    uv[0] = uv[0] - 1
+
+// not currently used
+// provides a different aesthetic
+function altUVMethod (position) {
+  var x = position[0], y = position[1], z = position[2]
+  var px, py, pz, d
+  var u, v
+
+  d = Math.sqrt(x * x + y * y + z * z)
+
+  px = x / d
+  py = y / d
+  pz = z / d
+
+  var normalisedX = 0
+  var normalisedZ = -1
+  if (((px * px) + (pz * pz)) > 0) {
+    normalisedX = Math.sqrt((px * px) / ((px * px) + (pz * pz)))
+
+    if (px < 0) {
+      normalisedX = -normalisedX
+    }
+
+    normalisedZ = Math.sqrt((pz * pz) / ((px * px) + (pz * pz)))
+
+    if (pz < 0) {
+      normalisedZ = -normalisedZ
+    }
   }
-  if ( ( vector[0] === 0) && ( vector[2] === 0)) {
-    uv[0] = azimuth / 2 / Math.PI + 0.5
+  if (normalisedZ === 0) {
+    u = ((normalisedX * Math.PI) / 2)
+  } else {
+    u = Math.atan(normalisedX / normalisedZ)
+
+    if (normalisedZ < 0) {
+      u += Math.PI
+    }
   }
+  if (u < 0) {
+    u += 2 * Math.PI
+  }
+  u /= 2 * Math.PI
+  v = (-py + 1) / 2
+  return [u, v]
 }

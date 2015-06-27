@@ -1,6 +1,6 @@
 {
   "name": "primitive-icosphere",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "an icosphere mesh with normals, texture coordinates and indices",
   "main": "index.js",
   "license": "MIT",

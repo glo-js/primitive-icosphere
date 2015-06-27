@@ -3,7 +3,6 @@ var normalize = require('gl-vec3/normalize')
 var scale = require('gl-vec3/scale')
 var fixWrappedUVs = require('./lib/fix-wrapped-uvs')
 var fixPoles = require('./lib/fix-pole-uvs')
-var triangleCentroid = require('triangle-centroid')
 
 module.exports = function primitiveIcosphere (radius, opt) {
   opt = opt || {}
@@ -32,6 +31,7 @@ module.exports = function primitiveIcosphere (radius, opt) {
     normals: normals
   }
 
+  // attempt to fix some of the glaring seam issues
   fixPoles(mesh)
   fixWrappedUVs(mesh)
 
@@ -48,51 +48,4 @@ module.exports = function primitiveIcosphere (radius, opt) {
   }
 
   return mesh
-}
-
-
-
-// not currently used
-// provides a different aesthetic
-function altUVMethod (position) {
-  var x = position[0], y = position[1], z = position[2]
-  var px, py, pz, d
-  var u, v
-
-  d = Math.sqrt(x * x + y * y + z * z)
-
-  px = x / d
-  py = y / d
-  pz = z / d
-
-  var normalisedX = 0
-  var normalisedZ = -1
-  if (((px * px) + (pz * pz)) > 0) {
-    normalisedX = Math.sqrt((px * px) / ((px * px) + (pz * pz)))
-
-    if (px < 0) {
-      normalisedX = -normalisedX
-    }
-
-    normalisedZ = Math.sqrt((pz * pz) / ((px * px) + (pz * pz)))
-
-    if (pz < 0) {
-      normalisedZ = -normalisedZ
-    }
-  }
-  if (normalisedZ === 0) {
-    u = ((normalisedX * Math.PI) / 2)
-  } else {
-    u = Math.atan(normalisedX / normalisedZ)
-
-    if (normalisedZ < 0) {
-      u += Math.PI
-    }
-  }
-  if (u < 0) {
-    u += 2 * Math.PI
-  }
-  u /= 2 * Math.PI
-  v = (-py + 1) / 2
-  return [u, v]
 }
